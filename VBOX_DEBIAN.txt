@@ -1,0 +1,86 @@
+# VBOX_DEBIAN_10
+# Update : 2K20-06-15
+# Author : flourdau
+# Description : Installation des addons vbox pour debian 10, du partage de fichiers, SSHD, apache2
+
+
+# SU (jusqu'à la commande shutdown)
+su -
+nano /etc/sudoers
+  USERNAME ALL=(ALL) PASSWD:ALL
+
+# Insérez le CDROM Debian ou configurer une source mirroir
+nano /etc/apt/sources.list
+  # deb cdrom:[Debian GNU/Linux 10.4.0 _Buster_ - Official amd64 DVD Binary-1 202$
+  deb http://deb.debian.org/debian/ buster main
+  deb-src http://deb.debian.org/debian/ buster main
+  deb http://security.debian.org/debian-security buster/updates main contrib
+  deb-src http://security.debian.org/debian-security buster/updates main contrib
+  deb http://deb.debian.org/debian/ buster-updates main contrib
+  deb-src http://deb.debian.org/debian/ buster-updates main contrib
+
+
+# DRIVERS
+apt-get update -y && apt-get dist-upgrade -y
+apt-get install -y dkms build-essential module-assistant 
+# fail2ban openssh-server openssh-client emacs25-nox git python3-pip apache2 php7.3 php7.3-bcmath php7.3-cli php7.3-curl php7.3-gd php7.3-json php7.3-mbstring php7.3-mysql php7.3-opcache php7.3-readline php7.3-xml php7.3-zip mariadb-server-10.3 mariadb-client-10.3 composer
+m-a prepare
+# insérez le VBOXADDITIONS  
+# '/Périphériques/Insérer l'image CD des additions invité...' 
+# (patienter & fermer la pop-up qui s'affiche)
+sh /media/cdrom0/VBoxLinux*.run
+
+
+# SHARED FOLDER :
+usermod -aG vboxsf USERNAME
+shutdown -h 0
+# Paramétrer le partage de la VBox dans la configuration de la machine
+# Attention, juste nommer le partege (NOM_DOSSIER_PARTAGÉ_DANS_VIRTUALBOX) mais ne rien cocher
+sudo nano /etc/fstab
+  NOM_DOSSIER_PARTAGÉ_DANS_VIRTUALBOX /var/www vboxsf defaults 0 0
+(Attention aux espaces ce sont des tab!)
+
+
+# SSHD (ATTENTION A BIEN REMPLACER USERNAME IP & PORT!!!!!)
+sudo nano /etc/ssh/sshd_config
+  Port 44044
+  ChallengeResponseAuthentication no
+  UsePAM yes
+  X11Forwarding yes
+  PrintMotd no
+  AcceptEnv LANG LC_*
+  Subsystem       sftp    /usr/lib/openssh/sftp-server
+  PermitRootLogin no
+  AllowUsers USERNAME
+
+# Depuis la machine hote
+ssh-keygen
+ssh-copy-id -p44044 <USERNAME>@<IP-ADDRESS>
+        !!! OU !!!
+scp.exe -P44044 .\.ssh\id_rsa.pub USERNAME@IP-ADDRESS:~/.ssh/authorized_keys
+ssh -p44044 <USERNAME>@<IP-ADDRESS>
+
+# Change & Add
+sudo nano /etc/ssh/sshd_config
+  PasswordAuthentication no
+  UsePAM no
+
+
+# APACHE2
+sudo nano /etc/apache2/sites-available/000-MYSITENAME.conf
+  Listen 8080
+  <VirtualHost *:8080>
+      ServerAdmin USERNAME@localhost
+      ServerName MYSITENAME
+      DocumentRoot /var/www/MYSITENAME/public/
+      <Directory /var/www/MYSITENAME/public/>
+          Options +Indexes +FollowSymLinks
+          AllowOverride All
+          Require all granted
+      </Directory>
+  </VirtualHost> 
+
+sudo ln -s ~/Documents/MYSITENAME /var/www/MYSITENAME
+sudo a2ensite 000-MYSITENAME.conf
+sudo a2enmod rewrite
+sudo systemctl restart apache2.service
