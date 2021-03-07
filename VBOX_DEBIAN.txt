@@ -1,7 +1,7 @@
 # VBOX_DEBIAN_10
-# Update : 2K20-06-15
+# Update : 2K20-11-27
 # Author : flourdau
-# Description : Installation des addons vbox pour debian 10, du partage de fichiers, SSHD, apache2
+# Description : Installation des addons vbox pour debian 10, du partage de fichiers, SSHD, apache2, T0R
 
 
 # SU (jusqu'à la commande shutdown)
@@ -11,7 +11,6 @@ nano /etc/sudoers
 
 # Insérez le CDROM Debian ou configurer une source mirroir
 nano /etc/apt/sources.list
-  # deb cdrom:[Debian GNU/Linux 10.4.0 _Buster_ - Official amd64 DVD Binary-1 202$
   deb http://deb.debian.org/debian/ buster main
   deb-src http://deb.debian.org/debian/ buster main
   deb http://security.debian.org/debian-security buster/updates main contrib
@@ -86,6 +85,7 @@ sudo a2ensite 000-MYSITENAME.conf
 sudo a2enmod rewrite
 sudo systemctl restart apache2.service
 
+
 # TOR
 systemctl status tor@default.service
 nano /etc/tor/torrc
@@ -95,3 +95,6 @@ nano /etc/tor/torrc
   DataDirectory /var/lib/tor
 
 systemctl restart tor@default.service
+
+Options dans Firefox de l'Host -> Paramètre réseau (tout en bas)
+  Hôte SOCKS : ADRESSE_IP_SERVER Port:9050
